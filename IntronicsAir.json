@@ -1,0 +1,962 @@
+[
+    {
+        "id": "b5b205eda3dea17f",
+        "type": "aedes broker",
+        "z": "c966afa79966a4dc",
+        "name": "",
+        "mqtt_port": 1883,
+        "mqtt_ws_bind": "port",
+        "mqtt_ws_port": "",
+        "mqtt_ws_path": "",
+        "cert": "",
+        "key": "",
+        "certname": "",
+        "keyname": "",
+        "dburl": "",
+        "usetls": false,
+        "x": 170,
+        "y": 80,
+        "wires": [
+            [
+                "55c5629b0e133182"
+            ],
+            [
+                "4b4ad3fd44228b73",
+                "f5a66199773cb2f0"
+            ]
+        ]
+    },
+    {
+        "id": "4b4ad3fd44228b73",
+        "type": "debug",
+        "z": "c966afa79966a4dc",
+        "name": "",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 410,
+        "y": 60,
+        "wires": []
+    },
+    {
+        "id": "ffe3ecb11ad09309",
+        "type": "mqtt in",
+        "z": "c966afa79966a4dc",
+        "name": "",
+        "topic": "/broadcast/device/#",
+        "qos": "2",
+        "datatype": "utf8",
+        "broker": "f61dae19fe3cb748",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 170,
+        "y": 200,
+        "wires": [
+            [
+                "918872e6c7f21490",
+                "9e9af1714c1e6687"
+            ]
+        ]
+    },
+    {
+        "id": "918872e6c7f21490",
+        "type": "debug",
+        "z": "c966afa79966a4dc",
+        "name": "",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 390,
+        "y": 200,
+        "wires": []
+    },
+    {
+        "id": "f5a66199773cb2f0",
+        "type": "switch",
+        "z": "c966afa79966a4dc",
+        "name": "client not null",
+        "property": "payload.client",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "nnull"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 1,
+        "x": 410,
+        "y": 100,
+        "wires": [
+            [
+                "796abe348df10dd3",
+                "53c4ebe578603be7"
+            ]
+        ]
+    },
+    {
+        "id": "796abe348df10dd3",
+        "type": "debug",
+        "z": "c966afa79966a4dc",
+        "name": "",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 670,
+        "y": 100,
+        "wires": []
+    },
+    {
+        "id": "633b30174794b645",
+        "type": "mqtt out",
+        "z": "c966afa79966a4dc",
+        "name": "",
+        "topic": "/query/device/2C3AE846F717",
+        "qos": "1",
+        "retain": "",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "f61dae19fe3cb748",
+        "x": 730,
+        "y": 420,
+        "wires": []
+    },
+    {
+        "id": "de134cba5cd4f153",
+        "type": "inject",
+        "z": "c966afa79966a4dc",
+        "name": "test OFF",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            },
+            {
+                "p": "regAdr",
+                "v": "2",
+                "vt": "num"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "00",
+        "payloadType": "str",
+        "x": 160,
+        "y": 360,
+        "wires": [
+            [
+                "a9e5038ffea73c4c"
+            ]
+        ]
+    },
+    {
+        "id": "a9e5038ffea73c4c",
+        "type": "function",
+        "z": "c966afa79966a4dc",
+        "name": "👻 Build Write Query",
+        "func": "function LRC(str) {\n  for (var bytes = [], lrc = 0, i = 0; i < str.length; i++)\n    bytes.push(parseInt(str.substr(2 * i, 2), 16));\n  let blen = bytes.length / 2;\n  for (var j = 0; j < blen; j++) lrc = (lrc + bytes[j]) & 255;\n  return {\n    lrc: (lrc = (1 + (255 ^ lrc)) & 255),\n    hex: lrc.toString(16),\n    bytes: bytes,\n  };\n}\nfunction write(MAC, msgID, adr, no, data) {\n  let byteCount = (data.length / 2 || 0)\n      .toString(16)\n      .toUpperCase()\n      .padStart(4, \"0\")\n      .toUpperCase(),\n    payload = `${(\"\" + MAC).padStart(12, \"0\")}${(\"\" + msgID).padStart(\n      4,\n      \"0\"\n    )}01${(\"\" + adr).padStart(2, \"0\")}${(\"\" + no).padStart(\n      2,\n      \"0\"\n    )}${byteCount.substr(2, 2)}${byteCount.substr(0, 2)}${data}`;\n  return `<${payload.toUpperCase()}${LRC(payload)\n    .hex.padStart(2, \"0\")\n    .toUpperCase()}>`;\n}\nlet registers = {\n  0: [{ n: \"version\", t: 3 }],\n  1: [\n    { n: \"who\", t: 1, r: [7, 7] },\n    { n: \"type\", t: 1, r: [0, 4] },\n  ],\n  2: [{ n: \"onOff\", t: 3 }],\n  3: [{ n: \"locked\", t: 3 }],\n  4: [{ n: \"fanSpeed\", t: 3 }],\n  5: [{ n: \"setTemp\", t: 3 }],\n  6: [\n    { n: \"error.commuError\", t: 1, r: [7, 7] },\n    { n: \"error.Pump\", t: 1, r: [4, 4] },\n    { n: \"error.RTC\", t: 1, r: [3, 3] },\n    { n: \"error.deIceSensor\", t: 1, r: [2, 2] },\n    { n: \"error.freezeSensor\", t: 1, r: [1, 1] },\n    { n: \"error.roomSensor\", t: 1, r: [0, 0] },\n  ],\n  7: [\n    { n: \"swing.horizontal\", t: 1, r: [3, 5] },\n    { n: \"swing.vertical\", t: 1, r: [0, 2] },\n  ],\n  8: [{ n: \"mode\", t: 3 }],\n  9: [{ n: \"roomTempLo\", t: 3 }],\n  10: [{ n: \"roomTempHi\", t: 3 }],\n  11: [\n    { n: \"other.CF\", t: 1, r: [6, 6] },\n    { n: \"other.traySwitch\", t: 1, r: [5, 5] },\n    { n: \"other.reversingValve\", t: 1, r: [4, 4] },\n    { n: \"other.heater\", t: 1, r: [3, 3] },\n    { n: \"other.comp\", t: 1, r: [2, 2] },\n    { n: \"other.pump\", t: 1, r: [1, 1] },\n    { n: \"other.outdoorFan\", t: 1, r: [0, 0] },\n  ],\n  12: [\n    { n: \"protect.coolingFail\", t: 1, r: [7, 7] },\n    { n: \"protect.heatingFail\", t: 1, r: [6, 6] },\n    { n: \"protect.compOverload\", t: 1, r: [5, 5] },\n    { n: \"protect.outdoorOverheat\", t: 1, r: [4, 4] },\n    { n: \"protect.outdoorLowAmbient\", t: 1, r: [3, 3] },\n    { n: \"protect.deIce\", t: 1, r: [1, 1] },\n    { n: \"protect.freeze\", t: 1, r: [0, 0] },\n  ],\n  13: [\n    { n: \"sleep\", t: 1, r: [7, 7] },\n    { n: \"ionize\", t: 1, r: [6, 6] },\n    { n: \"timerType\", t: 1, r: [5, 5] },\n    { n: \"timerOnHr\", t: 1, r: [0, 4] },\n  ],\n  14: [\n    { n: \"clean\", t: 1, r: [7, 7] },\n    { n: \"clean\", t: 1, r: [6, 6] },\n    { n: \"timerOnMin\", t: 1, r: [0, 5] },\n  ],\n  15: [\n    { n: \"eco\", t: 1, r: [7, 7] },\n    { n: \"turbo\", t: 1, r: [6, 6] },\n    { n: \"spare\", t: 1, r: [5, 5] },\n    { n: \"timerOffHr\", t: 1, r: [0, 4] },\n  ],\n  16: [\n    { n: \"spare\", t: 1, r: [7, 7] },\n    { n: \"timerOffMin\", t: 1, r: [0, 5] },\n  ],\n  19: [{ n: \"customerCode\", t: 3 }],\n  20: [{ n: \"rssi\", t: 3 }],\n};\nmsg.payload = write(\"2C3AE846F717\", 0, msg.regAdr, 1, msg.payload);\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 440,
+        "y": 380,
+        "wires": [
+            [
+                "f25ddef55b594d0d",
+                "633b30174794b645"
+            ]
+        ]
+    },
+    {
+        "id": "2433c8876e11d390",
+        "type": "mqtt in",
+        "z": "c966afa79966a4dc",
+        "name": "",
+        "topic": "/response/#",
+        "qos": "2",
+        "datatype": "utf8",
+        "broker": "f61dae19fe3cb748",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 150,
+        "y": 280,
+        "wires": [
+            [
+                "9e9af1714c1e6687",
+                "15910eee748cdeb9"
+            ]
+        ]
+    },
+    {
+        "id": "f186f056153d4a00",
+        "type": "debug",
+        "z": "c966afa79966a4dc",
+        "name": "",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 650,
+        "y": 200,
+        "wires": []
+    },
+    {
+        "id": "f25ddef55b594d0d",
+        "type": "debug",
+        "z": "c966afa79966a4dc",
+        "name": "",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 670,
+        "y": 360,
+        "wires": []
+    },
+    {
+        "id": "e2695d463451f415",
+        "type": "inject",
+        "z": "c966afa79966a4dc",
+        "name": "test ON",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            },
+            {
+                "p": "regAdr",
+                "v": "2",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "01",
+        "payloadType": "str",
+        "x": 150,
+        "y": 420,
+        "wires": [
+            [
+                "a9e5038ffea73c4c"
+            ]
+        ]
+    },
+    {
+        "id": "9e9af1714c1e6687",
+        "type": "function",
+        "z": "c966afa79966a4dc",
+        "name": "❤️ Response Catch Up",
+        "func": "let registers={0:[{n:\"version\",t:3}],1:[{n:\"who\",t:1,r:[7,7]},{n:\"type\",t:1,r:[0,4]}],2:[{n:\"onOff\",t:3}],3:[{n:\"locked\",t:3}],4:[{n:\"fanSpeed\",t:3}],5:[{n:\"setTemp\",t:3}],6:[{n:\"error.commuError\",t:1,r:[7,7]},{n:\"error.Pump\",t:1,r:[4,4]},{n:\"error.RTC\",t:1,r:[3,3]},{n:\"error.deIceSensor\",t:1,r:[2,2]},{n:\"error.freezeSensor\",t:1,r:[1,1]},{n:\"error.roomSensor\",t:1,r:[0,0]}],7:[{n:\"swing.horizontal\",t:1,r:[3,5]},{n:\"swing.vertical\",t:1,r:[0,2]}],8:[{n:\"mode\",t:3}],9:[{n:\"roomTempLo\",t:3}],10:[{n:\"roomTempHi\",t:3}],11:[{n:\"other.CF\",t:1,r:[6,6]},{n:\"other.traySwitch\",t:1,r:[5,5]},{n:\"other.reversingValve\",t:1,r:[4,4]},{n:\"other.heater\",t:1,r:[3,3]},{n:\"other.comp\",t:1,r:[2,2]},{n:\"other.pump\",t:1,r:[1,1]},{n:\"other.outdoorFan\",t:1,r:[0,0]}],12:[{n:\"protect.coolingFail\",t:1,r:[7,7]},{n:\"protect.heatingFail\",t:1,r:[6,6]},{n:\"protect.compOverload\",t:1,r:[5,5]},{n:\"protect.outdoorOverheat\",t:1,r:[4,4]},{n:\"protect.outdoorLowAmbient\",t:1,r:[3,3]},{n:\"protect.deIce\",t:1,r:[1,1]},{n:\"protect.freeze\",t:1,r:[0,0]}],13:[{n:\"sleep\",t:1,r:[7,7]},{n:\"ionize\",t:1,r:[6,6]},{n:\"timerType\",t:1,r:[5,5]},{n:\"timerOnHr\",t:1,r:[0,4]}],14:[{n:\"clean\",t:1,r:[7,7]},{n:\"clean\",t:1,r:[6,6]},{n:\"timerOnMin\",t:1,r:[0,5]}],15:[{n:\"eco\",t:1,r:[7,7]},{n:\"turbo\",t:1,r:[6,6]},{n:\"spare\",t:1,r:[5,5]},{n:\"timerOffHr\",t:1,r:[0,4]}],16:[{n:\"spare\",t:1,r:[7,7]},{n:\"timerOffMin\",t:1,r:[0,5]}],19:[{n:\"customerCode\",t:3}],20:[{n:\"rssi\",t:3}]};\nfunction response(s){\n    if (typeof s !== 'string') return 0;\n\n    if((s[0]!= '[') || (s[s.length-1]!= ']')) return 1;\n    //NEED CHECK LRC Here\n    let fn = parseInt(s.substring(17,19),16)\n    let adr,no,bytes,data,ecode,values,lrc\n    let m = {\n        mac: s.substring(1,13),\n        msgId: s.substring(13,17),\n        fn,\n        adr,\n        no,\n        bytes,\n        data,\n        //lrc: s.slice(27+(bytes*2),27+(bytes*2)+2),\n        values\n    }\n    let dataOp = ()=>{\n        bytes = parseInt(s.substring(21,23),16)\n        data =[]\n        for(let i=0 ; i<bytes;i++){\n             data[i] = parseInt(s.substring(27+(i*2),27+(i*2)+2),16)\n        }\n        m.bytes = bytes\n        m.data = data\n        m.values = value(m.adr,data)\n    }\n    switch(fn){\n        case 0: //READ\n            m.adr = s.substring(19,21)\n            m.no = parseInt(s.substring(21,23),16)\n            dataOp()\n            break;\n        case 1: //WRITE\n            m.adr = s.substring(19,21)\n            m.no = parseInt(s.substring(21,23),16)\n            break;\n        case 2: //BROADCAST\n            m.adr = s.substring(19,21)\n            m.no = parseInt(s.substring(21,23),16)\n            dataOp()\n            break;\n        case 3: //ERROR\n            m.ecode = parseInt(s.substring(21,23),16)\n            break;\n    }\n    return m\n}\nfunction value(adr,data){\n    let result = {}\n    for(let d in data){\n        for(let v of registers[adr]||[]){\n            result[v.n] = {\n                n:v.n,\n                t:v.t,\n                r:v.r,\n                adr:adr,\n                fam:registers[adr],\n                raw:data[d],\n                v: v.t==1?  b2num(data[d],v.r[0],v.r[1]):data[d],\n            }\n        }\n        adr++\n    }\n    return result;\n}\nfunction b2num(num,start,stop){\n    num = num << (7-stop)\n    num = num & 0xFF\n    num = num >>> (7-stop + start)\n    return num\n}\nmsg.payload = response(msg.payload)\nmsg.filename = \"dataNR.json\";\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 450,
+        "y": 240,
+        "wires": [
+            [
+                "f186f056153d4a00",
+                "8597479af7d69e9f",
+                "9ccfe960a22f7c9f"
+            ]
+        ]
+    },
+    {
+        "id": "15910eee748cdeb9",
+        "type": "debug",
+        "z": "c966afa79966a4dc",
+        "name": "",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 390,
+        "y": 280,
+        "wires": []
+    },
+    {
+        "id": "8597479af7d69e9f",
+        "type": "function",
+        "z": "c966afa79966a4dc",
+        "name": "",
+        "func": "if(msg.payload.values){\n    let prev = flow.get('realtime.' + msg.payload.mac)||{}\n    flow.set('realtime.' + msg.payload.mac, {...prev,...msg.payload.values}) // merge\n}\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 660,
+        "y": 320,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "c4e5d7cd4f54214b",
+        "type": "comment",
+        "z": "c966afa79966a4dc",
+        "name": "Modify Before Send",
+        "info": "",
+        "x": 970,
+        "y": 420,
+        "wires": []
+    },
+    {
+        "id": "709809c121bfa3be",
+        "type": "function",
+        "z": "c966afa79966a4dc",
+        "name": "Update Latest Connection",
+        "func": "flow.set(\"latest_response.\" + msg.payload.client.id, new Date())\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 930,
+        "y": 120,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "53c4ebe578603be7",
+        "type": "switch",
+        "z": "c966afa79966a4dc",
+        "name": "",
+        "property": "payload.client.connected",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "true"
+            },
+            {
+                "t": "false"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 2,
+        "x": 650,
+        "y": 140,
+        "wires": [
+            [
+                "709809c121bfa3be"
+            ],
+            [
+                "76b917d2d90dd4a3"
+            ]
+        ]
+    },
+    {
+        "id": "76b917d2d90dd4a3",
+        "type": "debug",
+        "z": "c966afa79966a4dc",
+        "name": "Disconnected",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 900,
+        "y": 160,
+        "wires": []
+    },
+    {
+        "id": "61925706e4bbf9b4",
+        "type": "inject",
+        "z": "c966afa79966a4dc",
+        "name": "test Set Temp 25",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            },
+            {
+                "p": "regAdr",
+                "v": "5",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "19",
+        "payloadType": "str",
+        "x": 180,
+        "y": 460,
+        "wires": [
+            [
+                "a9e5038ffea73c4c"
+            ]
+        ]
+    },
+    {
+        "id": "0ab8c0e11d978427",
+        "type": "inject",
+        "z": "c966afa79966a4dc",
+        "name": "test Set Temp 9",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            },
+            {
+                "p": "regAdr",
+                "v": "5",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "0F",
+        "payloadType": "str",
+        "x": 180,
+        "y": 500,
+        "wires": [
+            [
+                "a9e5038ffea73c4c"
+            ]
+        ]
+    },
+    {
+        "id": "b9d091f5568ba7e7",
+        "type": "inject",
+        "z": "c966afa79966a4dc",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "<2C3AE846F717000001050101000A4C>",
+        "payloadType": "str",
+        "x": 430,
+        "y": 460,
+        "wires": [
+            [
+                "633b30174794b645"
+            ]
+        ]
+    },
+    {
+        "id": "59aa192c55cb83e9",
+        "type": "comment",
+        "z": "c966afa79966a4dc",
+        "name": "SetTemp Gain = 0.5",
+        "info": "",
+        "x": 170,
+        "y": 540,
+        "wires": []
+    },
+    {
+        "id": "1b589c8165c1c227",
+        "type": "file",
+        "z": "c966afa79966a4dc",
+        "name": "",
+        "filename": "",
+        "appendNewline": false,
+        "createDir": false,
+        "overwriteFile": "true",
+        "encoding": "none",
+        "x": 900,
+        "y": 240,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "961b313a2bf62b40",
+        "type": "http in",
+        "z": "c966afa79966a4dc",
+        "name": "",
+        "url": "api/v1/list_data",
+        "method": "get",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 150,
+        "y": 620,
+        "wires": [
+            [
+                "5b209de3d70bf57f"
+            ]
+        ]
+    },
+    {
+        "id": "f71e8e0ff5ae5dd6",
+        "type": "http in",
+        "z": "c966afa79966a4dc",
+        "name": "",
+        "url": "api/v1/set_command",
+        "method": "post",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 180,
+        "y": 740,
+        "wires": [
+            [
+                "46fa0f8a777aa924"
+            ]
+        ]
+    },
+    {
+        "id": "3a27be640b7f0aa0",
+        "type": "file in",
+        "z": "c966afa79966a4dc",
+        "name": "",
+        "filename": "",
+        "format": "utf8",
+        "chunk": false,
+        "sendError": false,
+        "encoding": "none",
+        "allProps": false,
+        "x": 460,
+        "y": 620,
+        "wires": [
+            [
+                "ca5bb0f599d2fb9c"
+            ]
+        ]
+    },
+    {
+        "id": "5b209de3d70bf57f",
+        "type": "function",
+        "z": "c966afa79966a4dc",
+        "name": "filename",
+        "func": "msg.filename = \"dataNR.json\";\nreturn msg;\n",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 320,
+        "y": 620,
+        "wires": [
+            [
+                "3a27be640b7f0aa0"
+            ]
+        ]
+    },
+    {
+        "id": "2661a64d3445f899",
+        "type": "function",
+        "z": "c966afa79966a4dc",
+        "name": "SwitchCase",
+        "func": "let output = {};\nif(Object.keys(msg.payload.values).length > 0){\n    output[\"_attr\"] = {};\n    output[\"_analogInput\"] = [];\n    output[\"_digitalInput\"] = [];\n    output[\"_deviceStatus\"] = [];\n    output[\"_outputStatus\"] = [];\n    output[\"_alarm\"] = [];\n    output[\"_others\"] = [];\n    \n    output._attr[\"Mac\"] = msg.payload.mac;\n    for(let [key,value] of Object.entries(msg.payload.values)){\n        for(let i in value.fam){\n            switch(key){\n                case \"who\":\n                    if(value.fam[i].n == value.n){\n                        output._attr[value.n] = value.v == 1 ? \"Change from network\" : \"Device\";\n                    }\n                break;\n                case \"type\":\n                    if(value.fam[i].n == value.n){\n                        output._attr[value.n] = value.v == 0 ? \"AIR\":NaN;\n                    }\n                break;\n                case \"onOff\":\n                    output._deviceStatus.push({\n                        name : value.n,\n                        label : value.v == 1 ? \"On\" : \"Off\",\n                        value : value.v,\n                    });\n                break;\n                case \"locked\":\n                    output._deviceStatus.push({\n                        name : value.n,\n                        label : value.v == 1 ? \"Lock\" : \"UnLock\",\n                        value : value.v,\n                    });\n                break;\n                case \"fanSpeed\":\n                    let labelFan = \"\";\n                    switch(value.v){\n                        case 0:\n                            labelFan = \"AUTO\";\n                        break;\n                        case 1:\n                            labelFan = \"HIGH\";\n                        break;\n                        case 2:\n                            labelFan = \"MED\";\n                        break;\n                        case 3:\n                            labelFan = \"LOW\";\n                        break;\n                        default:\n                        break;\n                    }\n                    output._deviceStatus.push({\n                        name : value.n,\n                        label : labelFan,\n                        value : value.v,\n                    });\n                break;\n                case \"setTemp\":\n                    let min = 15,max = 30,values = parseFloat((value.v /2) + 15);\n                    let rawMin = 15,rawMax = 30, rawValue = parseFloat((value.raw / 2) + 15);\n                    value.raw = rawValue;\n                    value.v = values;\n                    \n                    output._analogInput.push({\n                        name : value.n,\n                        value : value.v,\n                        unit : \"°C\",\n                    });\n                break;\n                case \"error.commuError\":\n                    if(value.fam[i].n == value.n){\n                        output._alarm.push({\n                            name : value.n,\n                            value : value.v,\n                        });\n                    }\n    \t\t\tbreak;\n    \t\t\tcase \"error.Pump\":\n\t\t\t\t    if(value.fam[i].n == value.n){\n\t\t\t\t        output._alarm.push({\n\t\t\t\t            name : value.n,\n\t\t\t\t            value : value.v,\n\t\t\t\t        });\n\t\t\t\t    }\n    \t\t\tbreak;\n    \t\t\tcase \"error.RTC\":\n\t\t\t        if(value.fam[i].n == value.n){\n\t\t\t            output._alarm.push({\n\t\t\t                name : value.n,\n\t\t\t                value : value.v,\n\t\t\t            });\n\t\t\t        }\n    \t\t\tbreak;\n    \t\t\tcase \"error.deIceSensor\":\n\t\t\t\t    if(value.fam[i].n == value.n){\n\t\t\t\t        output._alarm.push({\n\t\t\t\t            name : value.n,\n\t\t\t\t            value : value.v,\n\t\t\t\t        });\n\t\t\t\t    }\n    \t\t\tbreak;\n    \t\t\tcase \"error.freezeSensor\":\n\t\t\t\t    if(value.fam[i].n == value.n){\n\t\t\t\t        output._alarm.push({\n\t\t\t\t            name : value.n,\n\t\t\t\t            value : value.v,\n\t\t\t\t        });\n\t\t\t\t    }\n    \t\t\tbreak;\n    \t\t\tcase \"error.roomSensor\":\n\t\t\t\t    if(value.fam[i].n == value.n){\n\t\t\t\t        output._alarm.push({\n\t\t\t\t            name : value.n,\n\t\t\t\t            value : value.v,\n\t\t\t\t        });\n\t\t\t\t    }\n    \t\t\tbreak;\n                case \"swing.horizontal\":\n                    if(value.fam[i].n == value.n){\n                        let str = value.v.toString(2);\n                        let labelHor = \"\";\n                        switch(str){\n                            case \"0\":\n                                labelHor = \"stop swing\";\n                                str = \"000\";\n                            break;\n                            case \"1\":\n                                labelHor = \"Manual position\";\n                                str = \"001\"\n                            break;\n                            case \"11\":\n                                labelHor = \"Manual position\";\n                                str = \"011\";\n                            break;\n                            case \"100\":\n                                labelHor = \"Manual position\";\n                            break;\n                            case \"110\":\n                                labelHor = \"Manual position\";\n                            break;\n                            case \"101\":\n                                labelHor = \"Manual position\";\n                            break;\n                            case \"111\":\n                                labelHor = \"Auto swing\";\n                            break;\n                            default:\n                            break;\n                        }\n                        output._deviceStatus.push({\n                            name : value.n,\n                            label : labelHor,\n                            value : str,\n                        })\n                    }\n                break;\n                case \"swing.vertical\":\n                    if(value.fam[i].n == value.n){\n                        let verStr = value.v.toString(2);\n                        let labelVer = \"\";\n                        switch(verStr){\n                            case \"0\":\n                                labelVer = \"Stop swing\";\n                                verStr = \"000\";\n                            break;\n                            case \"111\":\n                                labelVer = \"Auto swing\";\n                            break;\n                            default:\n                            break;\n                        }\n                        output._deviceStatus.push({\n                            name : value.n,\n                            label : labelVer,\n                            value : verStr,\n                        })\n                    }\n                break;\n                case \"mode\":\n                    let labelMode = \"\";\n                    switch(value.v){\n                        case 0:\n                            labelMode = \"FAN\";\n                        break;\n                        case 1:\n                            labelMode = \"COOL\";\n                        break;\n                        case 2:\n                            labelMode = \"DRY\";\n                        break;\n                        case 3:\n                            labelMode = \"HEAT\";\n                        break;\n                        case 4:\n                            labelMode = \"AUTO\";\n                        break;\n                        default:\n                        break;\n                    }\n                    output._deviceStatus.push({\n                        name : value.n,\n                        label : labelMode,\n                        value : value.v,\n                    });\n                break;\n                case \"roomTempLo\":\n                    let val = parseFloat(value.v / 10);\n                    output._analogInput.push({\n                        name : value.n,\n                        value : val,\n                        unit : \"°C\",\n                    });\n                break;\n                case \"roomTempHi\":\n                    // let vals = parseFloat(value.v / 10);\n                    output._analogInput.push({\n                        name : value.n,\n                        value : value.v,\n                        unit : \"°C\",\n                    })\n                break;\n                case \"other.CF\":\n                    if(value.fam[i].n == value.n){\n                        output._digitalInput.push({\n                            name : value.n,\n                            value : value.v,\n                        });\n                    }\n                break;\n                case \"other.traySwitch\":\n                    if(value.fam[i].n == value.n){\n                        output._digitalInput.push({\n                            name : value.n,\n                            value : value.v,\n                        });\n                    }\n                break;\n                case \"other.reversingValve\":\n                    if(value.fam == value.n){\n                        output._digitalInput.push({\n                            name : value.n,\n                            value : value.v,\n                        });\n                    }\n                break;\n                case \"other.heater\":\n                    if(value.fam[i].n == value.n){\n                        output._digitalInput.push({\n                            name : value.n,\n                            value : value.v,\n                        });\n                    }\n                break;\n                case \"other.comp\":\n                    if(value.fam[i].n == value.n){\n                        output._digitalInput.push({\n                            name : value.n,\n                            value : value.v,\n                        });\n                    }\n                break;\n                case \"other.pump\":\n                    if(value.fam[i].n == value.n){\n                        output._digitalInput.push({\n                            name : value.n,\n                            value : value.v,\n                        });\n                    }\n                break;\n                case \"other.outdoorFan\":\n                    if(value.fam[i].n == value.n){\n                        output._digitalInput.push({\n                            name : value.n,\n                            value : value.v,\n                        });\n                    }\n                break;\n                case \"protect.coolingFail\":\n                    if(value.fam[i].n == value.n){\n                        output._digitalInput.push({\n                            name : value.n,\n                            value : value.v,\n                        });\n                    }\n                break;\n                case \"protect.heatingFail\":\n                    if(value.fam[i].n == value.n){\n                        output._digitalInput.push({\n                            name : value.n,\n                            value : value.v,\n                        });\n                    }\n                break;\n                case \"protect.compOverload\":\n                    if(value.fam[i].n == value.n){\n                        output._digitalInput.push({\n                            name : value.n,\n                            value : value.v,\n                        });\n                    }\n                break;\n                case \"protect.outdoorOverheat\":\n                    if(value.fam[i].n == value.n){\n                        output._digitalInput.push({\n                            name : value.n,\n                            value : value.v,\n                        });\n                    }\n                break;\n                case \"protect.outdoorLowAmbient\":\n                    if(value.fam[i].n == value.n){\n                        output._digitalInput.push({\n                            name : value.n,\n                            value : value.v,\n                        });\n                    }\n                break;\n                case \"protect.deIce\":\n                    if(value.fam[i].n == value.n){\n                        output._digitalInput.push({\n                            name : value.n,\n                            value : value.v,\n                        });\n                    }\n                break;\n                case \"protect.freeze\":\n                    if(value.fam[i].n == value.n){\n                        output._digitalInput.push({\n                            name : value.n,\n                            value : value.v,\n                        });\n                    }\n                break;\n                case \"sleep\":\n                    if(value.fam[i].n == value.n){\n                        output._deviceStatus.push({\n                            name : value.n,\n                            value : value.v,\n                        });\n                    }\n                break;\n                case  \"ionize\":\n                    if(value.fam[i].n == value.n){\n                        output._deviceStatus.push({\n                            name : value.n,\n                            value : value.v,\n                        });\n                    }\n                break;\n                case \"timerType\":\n                    if(value.fam[i].n == value.n){\n                        output._others.push({\n                            name : value.n,\n                            label : value.v == 1 ? \"daily\" : \"onetime\",\n                            value : value.v,\n                        });\n                    }\n                break;\n                case \"timerOnHr\":\n                    if(value.fam[i].n == value.n){\n                        output._others.push({\n                            name : value.n,\n                            value : value.v,\n                        });\n                    }\n                break;\n                case \"clean\":\n                    if(JSON.stringify(value.r) == JSON.stringify(value.fam[i].r)){\n                        output._digitalInput.push({\n                            name : value.n,\n                            value : value.v,\n                        });\n                    }\n                break;\n                case \"timerOnMin\":\n                    if(value.fam[i].n == value.n){\n                        output._others[value.n] = {\n                            name : value.n,\n                            type : value.t,\n                            adr : value.adr,\n                            r : value.r,\n                            family : [{\n                                name : value.fam[i].n,\n                                type : value.fam[i].t,\n                                r : value.fam[i].r,\n                            }],\n                            raw : value.raw,\n                            value : value.v,\n                        }\n                    }\n                break;\n                case \"eco\":\n                    if(value.fam[i].n == value.n){\n                        output._deviceStatus.push({\n                            name : value.n,\n                            value : value.v,\n                        });\n                    }\n                break;\n                case \"turbo\":\n                    if(value.fam[i].n == value.n){\n                        output._deviceStatus.push({\n                            name : value.n,\n                            value : value.v,\n                        });\n                    }\n                break;\n                case \"spare\":\n                    \n                break;\n                case \"timerOffHr\":\n                    \n                break;\n                case \"timerOffMin\":\n                    \n                break;\n                case \"customerCode\":\n                    output._outputStatus.push({\n                        name : value.n,\n                        label : value.v == 0 ? \"FAN/COOL\" : \"HEAT/COOL\",\n                        value : value.v,\n                    });\n                break;\n                case \"rssi\":\n                    output._attr[value.n] = value.v;\n                break;\n                default:\n                break;\n            }\n        }\n    }\n}\nmsg.payload = output;\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 730,
+        "y": 620,
+        "wires": [
+            [
+                "0f5776c862127814"
+            ]
+        ]
+    },
+    {
+        "id": "ca5bb0f599d2fb9c",
+        "type": "json",
+        "z": "c966afa79966a4dc",
+        "name": "",
+        "property": "payload",
+        "action": "",
+        "pretty": false,
+        "x": 590,
+        "y": 620,
+        "wires": [
+            [
+                "2661a64d3445f899"
+            ]
+        ]
+    },
+    {
+        "id": "0f5776c862127814",
+        "type": "http response",
+        "z": "c966afa79966a4dc",
+        "name": "",
+        "statusCode": "",
+        "headers": {},
+        "x": 890,
+        "y": 620,
+        "wires": []
+    },
+    {
+        "id": "6c3b97199c81fe20",
+        "type": "http in",
+        "z": "c966afa79966a4dc",
+        "name": "",
+        "url": "api/v1/set_command",
+        "method": "get",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 170,
+        "y": 680,
+        "wires": [
+            [
+                "46f3b3cd57bff3c1"
+            ]
+        ]
+    },
+    {
+        "id": "46f3b3cd57bff3c1",
+        "type": "function",
+        "z": "c966afa79966a4dc",
+        "name": "command LIst",
+        "func": "let data = {\n    \"Use api\": {\n        \"method\":\"post\",\n        \"requestBody\":[\n            \"value\",\n            \"adr\"\n        ],\n    },\n    \"on/off\" : {\n        \"adr\" : \"2\",\n        \"description\": \"0-1 => 0=Off, 1=On, 255=do not change\",\n        \"type\": \"Number\"\n    },\n    \"lock status\" : {\n        \"adr\" : \"3\",\n        \"description\" : \"0-1 => 0=unlock, 1=lock, 255=do not change\",\n        \"type\":\"Number\"\n    },\n    \"fan speed\" : {\n        \"adr\" : \"4\",\n        \"desctiption\" : \"0-3 => 0=AUTO, 1=HIGH, 2=MED, 3=LOW, 255=do not change\",\n        \"type\":\"Number\"\n    },\n    \"setTemp\" : {\n        \"adr\" : \"5\",\n        \"description\" : \"0-30 (15.0°C-30.0°C), 255=do not change\",\n        \"gain\" : \"0.5\"\n    },\n    \"Swing\" : {\n        \"adr\" : \"7\",\n        \"Horz.Swing\" : \"0-7(bit3-5) => 000=stop swing, 001-101=Manual swing, 111=auto swing\",\n        \"Ver.Swing\" : \"0-7(bit0-2) => 000=stop swing, 111=auto swing\",\n        \"type\": \"Number\"\n    },\n    \"mode\" : {\n        \"adr\" : \"8\",\n        \"desciption\" : \"0-4 => 0=FAN, 1=COOL, 2=DRY, 3=HEAT, 4=AUTO, 255=do not change\",\n        \"type\":\"Number\"\n    },\n    \"sleep\":{\n        \"adr\":\"13\",\n        \"description\":\"0-1(bit7), 255=do not change\",\n        \"type\": \"Number\"\n    },\n    \"Ionize\":{\n        \"adr\":\"13\",\n        \"description\":\"0-1(bit6)\",\n        \"type\":\"Number\"\n    },\n    \"TimerType\":{\n        \"adr\":\"13\",\n        \"description\":\"0-1(bit5) => 0=onetime, 1=daily\",\n        \"type\":\"Number\"\n    },\n    \"TimerOnHour\":{\n        \"adr\":\"13\",\n        \"description\":\"0-23(bit0-4)\",\n        \"type\":\"Number\"\n    },\n    \"clean\":{\n        \"adr\":\"14\",\n        \"description\":\"0-1(bit7)\",\n        \"type\":\"Number\"\n    },\n    \"TimerOnMinute\":{\n        \"adr\":\"14\",\n        \"description\":\"0-59(bit0-5)\",\n        \"type\":\"Number\"\n    },\n    \"Econo\":{\n        \"adr\":\"15\",\n        \"description\":\"0-1(bit7) => 0=Off, 1=On, 255=do not change\",\n        \"type\":\"Number\"\n    },\n    \"Turbo\":{\n        \"adr\":\"15\",\n        \"description\":\"0-1(bit6)\",\n        \"type\":\"Number\"\n    },\n    \"TimerOffHour\":{\n        \"adr\":\"15\",\n        \"description\":\"0-23(bit0-4)\",\n        \"type\":\"Number\"\n    },\n    \"TimerOffMinute\":{\n        \"adr\":\"16\",\n        \"description\":\"0-59(bit0-5)\",\n        \"type\":\"Number\"\n    },\n};\nmsg.payload = data;\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 400,
+        "y": 680,
+        "wires": [
+            [
+                "ad1899e0978ce1b5"
+            ]
+        ]
+    },
+    {
+        "id": "ad1899e0978ce1b5",
+        "type": "http response",
+        "z": "c966afa79966a4dc",
+        "name": "",
+        "statusCode": "",
+        "headers": {},
+        "x": 550,
+        "y": 680,
+        "wires": []
+    },
+    {
+        "id": "014d11e15bb17ca0",
+        "type": "inject",
+        "z": "c966afa79966a4dc",
+        "name": "test",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            },
+            {
+                "p": "regAdr",
+                "v": "7",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "56",
+        "payloadType": "str",
+        "x": 187.14285278320312,
+        "y": 574.2857055664062,
+        "wires": [
+            [
+                "a9e5038ffea73c4c"
+            ]
+        ]
+    },
+    {
+        "id": "9ccfe960a22f7c9f",
+        "type": "function",
+        "z": "c966afa79966a4dc",
+        "name": "",
+        "func": "if(msg.payload.values){\n    msg.filename = \"dataNR.json\";\n    return msg;\n}",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 660,
+        "y": 240,
+        "wires": [
+            [
+                "1b589c8165c1c227"
+            ]
+        ]
+    },
+    {
+        "id": "46fa0f8a777aa924",
+        "type": "function",
+        "z": "c966afa79966a4dc",
+        "name": "",
+        "func": "var data = flow.get(\"realtime\")||{};\nlet mac = Object.keys(data)[0];\n\nconst bitwise = (val1,val2) =>{\n    if(val1 & val2){\n        return true;\n    }else{\n        return false;\n    }\n}\n\nlet swingHorz_mode = [\n    \"00000000\",\n    \"00111000\",\n];\nlet swingVer_mode = [\n    \"00000000\",\n    \"00000111\",\n];\n\nif(data){\n    let payload = msg.req.body.value;\n    let values;\n    for(let [key,value] of Object.entries(data[mac])){\n        if(value.adr == msg.req.body.adr){\n        \tswitch(msg.req.body.adr){\n        \t\tcase \"2\":\n        \t\t  //  ON/OFF\n        \t\t\tif(value.v !== msg.req.body.value){\n        \t\t\t\tvalues = payload.padStart(2,\"0\");\n        \t\t\t}\n        \t\tbreak;\n        \t\tcase \"3\":\n        \t\t  //  LOCKED\n        \t\t\tif(value.v !== msg.req.body.value){\n        \t\t\t\tvalues = payload.padStart(2,\"0\");\n        \t\t\t}\n        \t\tbreak;\n        \t\tcase \"4\":\n        \t\t  //  FAN STATUS\n        \t\t\tif(value.v !== msg.req.body.value){\n        \t\t\t\tvalues = payload.padStart(2,\"0\");\n        \t\t\t}\n        \t\tbreak;\n        \t\tcase \"5\":\n        \t\t  //  FAN STATUS\n        \t\t\tif(value.v !== msg.req.body.value){\n        \t\t\t\tpayload.padStart(2,\"0\");\n        \t\t\t\tvalues = parseInt(payload).toString(16).toUpperCase();\n        \t\t\t\tnode.warn(values)\n        \t\t\t}\n        \t\tbreak;\n        \t\tcase \"7\":\n        \t\t  //  SWING_MODE\n        \t\t\tlet bin7 = parseInt(payload,10).toString(2).padStart(8,\"0\");\n        \t\t\t\n        \t\t\tswingHorz_mode.map(x => {\n        \t\t\t   let valHorz = bitwise(x,bin7);\n        \t\t\t   if(valHorz == true){\n        \t\t\t       values = parseInt(bin7,2);\n        \t\t\t   }\n        \t\t\t});\n        \t\t\tswingVer_mode.map(x => {\n        \t\t\t   let valVer = bitwise(x,bin7);\n        \t\t\t   if(valVer == true){\n        \t\t\t       values = parseInt(bin7,2);\n        \t\t\t   }\n        \t\t\t});\n        \t\tbreak;\n        \t\tcase \"8\":\n        \t\t  //  A/C MODE\n        \t\t    values = payload.padStart(2,\"0\");\n        \t\tbreak;\n        \t\tcase \"13\":\n        \t\t    let val13 = parseInt(payload).toString(2).padStart(8,\"0\");\n        \t\t    \n        \t\t    let sleep = \"10000000\";\n                    let ionize = \"01000000\";\n                    let timerType = \"00100000\";\n                    \n                    let sleep_mode = bitwise(val13,sleep);\n                    let ionize_mode = bitwise(val13,ionize);\n                    let timer_type = bitwise(val13,timerType);\n                    \n                    for(let i = 0; i < 24; i++){\n                        if(i.toString() == payload){\n                            values = parseInt(payload);\n                        }else{\n                            if(sleep_mode == true || ionize_mode == true || timer_type == true){\n                                values = parseInt(val13,2);\n                            }\n                        }\n                    }\n        \t\tbreak;\n        \t\tcase \"14\":\n        \t\t    let val14 = payload.padStart(2,\"0\").padStart(8,\"0\");\n        \t\t    \n        \t\t    let clean = \"10000000\";\n        \t\t    let spare14 = \"01000000\";\n        \t\t    \n        \t\t    let clean_mode = bitwise(val14,clean);\n        \t\t    let spare14_mode = bitwise(val14,spare14);\n        \t\t    \n        \t\t    for(let i = 0; i < 60; i++){\n        \t\t        if(i.toString() == payload){\n        \t\t            values = payload.toString(2);\n        \t\t        }else{\n        \t\t            if(clean_mode == true || spare14_mode == true){\n        \t\t                values = parseInt(val14,2);\n        \t\t            }\n        \t\t        }\n        \t\t    }\n        \t\tbreak;\n        \t\tcase \"15\":\n        \t\t    let val15 = parseInt(payload).toString(2).padStart(8,\"0\");\n        \t\t    \n        \t\t    let eco = \"10000000\";\n                    let turbo = \"01000000\";\n                    let spare15 = \"00100000\";\n                    \n                    let eco_mode = bitwise(val15,eco);\n                    let turbo_mode = bitwise(val15,turbo);\n                    let spare15_mode = bitwise(val15,spare15);\n                    \n                    for(let i = 0; i < 24; i++){\n                        if(i.toString() == payload){\n                            values = payload.toString(2);\n                        }else{\n                            if(eco_mode == true || turbo_mode == true || spare15_mode == true){\n                                values = parseInt(val15,2);\n                            }\n                        }\n                    }\n        \t\tbreak;\n        \t\tcase \"16\":\n        \t\t    let val16 = parseInt(payload).toString(2).padStart(8,\"0\");\n        \t\t    \n        \t\t    let spare16 = \"10000000\";\n        \t\t    let spare16_mode = bitwise(val16,spare16);\n        \t\t    \n        \t\t    for(let i = 0; i < 60; i++){\n        \t\t        if(i.toString() == payload){\n        \t\t            values = payload.toString(2);\n        \t\t        }else{\n        \t\t            if(spare16_mode == true){\n        \t\t                values = parseInt(val16,2);\n        \t\t            }\n        \t\t        }\n        \t\t    }\n        \t\tbreak;\n        \t\tdefault:\n        \t\tbreak;\n        \t}\n        }\n    }\n    msg.payload = values;\n}\nmsg.regAdr = msg.req.body.adr;\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 400,
+        "y": 740,
+        "wires": [
+            [
+                "fab5cbbb8a73beaf"
+            ]
+        ]
+    },
+    {
+        "id": "fab5cbbb8a73beaf",
+        "type": "function",
+        "z": "c966afa79966a4dc",
+        "name": "👻 Build Write Query",
+        "func": "function LRC(str) {\n  for (var bytes = [], lrc = 0, i = 0; i < str.length; i++)\n    bytes.push(parseInt(str.substr(2 * i, 2), 16));\n  let blen = bytes.length / 2;\n  for (var j = 0; j < blen; j++) lrc = (lrc + bytes[j]) & 255;\n  return {\n    lrc: (lrc = (1 + (255 ^ lrc)) & 255),\n    hex: lrc.toString(16),\n    bytes: bytes,\n  };\n}\nfunction write(MAC, msgID, adr, no, data) {\n  let byteCount = (data.length / 2 || 0)\n      .toString(16)\n      .toUpperCase()\n      .padStart(4, \"0\")\n      .toUpperCase(),\n    payload = `${(\"\" + MAC).padStart(12, \"0\")}${(\"\" + msgID).padStart(\n      4,\n      \"0\"\n    )}01${(\"\" + adr).padStart(2, \"0\")}${(\"\" + no).padStart(\n      2,\n      \"0\"\n    )}${byteCount.substr(2, 2)}${byteCount.substr(0, 2)}${data}`;\n  return `<${payload.toUpperCase()}${LRC(payload)\n    .hex.padStart(2, \"0\")\n    .toUpperCase()}>`;\n}\nlet registers = {\n  0: [{ n: \"version\", t: 3 }],\n  1: [\n    { n: \"who\", t: 1, r: [7, 7] },\n    { n: \"type\", t: 1, r: [0, 4] },\n  ],\n  2: [{ n: \"onOff\", t: 3 }],\n  3: [{ n: \"locked\", t: 3 }],\n  4: [{ n: \"fanSpeed\", t: 3 }],\n  5: [{ n: \"setTemp\", t: 3 }],\n  6: [\n    { n: \"error.commuError\", t: 1, r: [7, 7] },\n    { n: \"error.Pump\", t: 1, r: [4, 4] },\n    { n: \"error.RTC\", t: 1, r: [3, 3] },\n    { n: \"error.deIceSensor\", t: 1, r: [2, 2] },\n    { n: \"error.freezeSensor\", t: 1, r: [1, 1] },\n    { n: \"error.roomSensor\", t: 1, r: [0, 0] },\n  ],\n  7: [\n    { n: \"swing.horizontal\", t: 1, r: [3, 5] },\n    { n: \"swing.vertical\", t: 1, r: [0, 2] },\n  ],\n  8: [{ n: \"mode\", t: 3 }],\n  9: [{ n: \"roomTempLo\", t: 3 }],\n  10: [{ n: \"roomTempHi\", t: 3 }],\n  11: [\n    { n: \"other.CF\", t: 1, r: [6, 6] },\n    { n: \"other.traySwitch\", t: 1, r: [5, 5] },\n    { n: \"other.reversingValve\", t: 1, r: [4, 4] },\n    { n: \"other.heater\", t: 1, r: [3, 3] },\n    { n: \"other.comp\", t: 1, r: [2, 2] },\n    { n: \"other.pump\", t: 1, r: [1, 1] },\n    { n: \"other.outdoorFan\", t: 1, r: [0, 0] },\n  ],\n  12: [\n    { n: \"protect.coolingFail\", t: 1, r: [7, 7] },\n    { n: \"protect.heatingFail\", t: 1, r: [6, 6] },\n    { n: \"protect.compOverload\", t: 1, r: [5, 5] },\n    { n: \"protect.outdoorOverheat\", t: 1, r: [4, 4] },\n    { n: \"protect.outdoorLowAmbient\", t: 1, r: [3, 3] },\n    { n: \"protect.deIce\", t: 1, r: [1, 1] },\n    { n: \"protect.freeze\", t: 1, r: [0, 0] },\n  ],\n  13: [\n    { n: \"sleep\", t: 1, r: [7, 7] },\n    { n: \"ionize\", t: 1, r: [6, 6] },\n    { n: \"timerType\", t: 1, r: [5, 5] },\n    { n: \"timerOnHr\", t: 1, r: [0, 4] },\n  ],\n  14: [\n    { n: \"clean\", t: 1, r: [7, 7] },\n    { n: \"clean\", t: 1, r: [6, 6] },\n    { n: \"timerOnMin\", t: 1, r: [0, 5] },\n  ],\n  15: [\n    { n: \"eco\", t: 1, r: [7, 7] },\n    { n: \"turbo\", t: 1, r: [6, 6] },\n    { n: \"spare\", t: 1, r: [5, 5] },\n    { n: \"timerOffHr\", t: 1, r: [0, 4] },\n  ],\n  16: [\n    { n: \"spare\", t: 1, r: [7, 7] },\n    { n: \"timerOffMin\", t: 1, r: [0, 5] },\n  ],\n  19: [{ n: \"customerCode\", t: 3 }],\n  20: [{ n: \"rssi\", t: 3 }],\n};\nmsg.payload = write(\"2C3AE846F717\", 0, msg.regAdr, 1, msg.payload);\nmsg.filename = \"dataNR.json\";\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 580,
+        "y": 740,
+        "wires": [
+            [
+                "0796f097fa1b7ab7",
+                "633b30174794b645"
+            ]
+        ]
+    },
+    {
+        "id": "d5c2972d1e557170",
+        "type": "file in",
+        "z": "c966afa79966a4dc",
+        "name": "",
+        "filename": "",
+        "format": "utf8",
+        "chunk": false,
+        "sendError": false,
+        "encoding": "none",
+        "allProps": false,
+        "x": 920,
+        "y": 740,
+        "wires": [
+            [
+                "58560e091ad8aaab"
+            ]
+        ]
+    },
+    {
+        "id": "d87ac8c65c370c2e",
+        "type": "function",
+        "z": "c966afa79966a4dc",
+        "name": "",
+        "func": "msg.req = {};\nmsg.req.body = {\n    value : \"27\",\n    adr : \"5\",\n}\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 280,
+        "y": 820,
+        "wires": [
+            [
+                "46fa0f8a777aa924"
+            ]
+        ]
+    },
+    {
+        "id": "58560e091ad8aaab",
+        "type": "json",
+        "z": "c966afa79966a4dc",
+        "name": "",
+        "property": "payload",
+        "action": "",
+        "pretty": false,
+        "x": 1050,
+        "y": 740,
+        "wires": [
+            [
+                "e9c8aeb595af1e41"
+            ]
+        ]
+    },
+    {
+        "id": "e9c8aeb595af1e41",
+        "type": "function",
+        "z": "c966afa79966a4dc",
+        "name": "",
+        "func": "let output = {};\nif(msg.payload.values){\n    for(let [key,value] of Object.entries(msg.payload.values)){\n        if(value.adr == msg.req.body.adr){\n            switch(value.adr){\n                case 2:\n                    // Response ON/OFF\n                    if(value.v !== msg.req.body.value){\n                        output.status = \"ok\";\n                    }else{\n                        output.status = \"error\";\n                    }\n                break;\n                case 3:\n                    // Response LOCKED MODE\n                    if(value.v !== msg.req.body.value){\n                        output.status = \"ok\";\n                    }else{\n                        output.status = \"error\";\n                    }\n                break;\n                case 4:\n                    // Response FAN SPEED\n                    if(value.v !== msg.req.body.value){\n                        output.status = \"ok\";\n                    }else{\n                        output.status = \"error\";\n                    }\n                break;\n                case 5:\n                    // Response SET TEMP\n                    if(value.v !== msg.req.body.value){\n                        output.status = \"ok\";\n                    }else{\n                        output.status = \"error\";\n                    }\n                break;\n                case 7:\n                    // SWING MODE\n                    let valSwing = parseInt(msg.req.body.value).toString(2).padStart(8,\"0\");\n                    let array = Array.from(valSwing).reverse();\n                    for(let i in array){\n                        let values = parseInt(array[i]);\n                        let index = parseInt(i);\n                        \n                        for(let a = 3; a <= 5; a++){\n                            if(a == index){\n                                if(values == 1){\n                                    output.status = \"ok\";\n                                }\n                            }else{\n                                output.status = \"error\";\n                            }\n                        }\n                        for(let a = 0; a <= 2; a++){\n                            if(a == index){\n                                if(values == 1){\n                                    output.status = \"ok\";\n                                }\n                            }else{\n                                output.status = \"error\";\n                            }\n                        }\n                    }\n                break;\n                case 8:\n                    // A/C MODE\n                    if(value.v == msg.req.body.value){\n                        output.status = \"ok\";\n                    }else{\n                        output.status = \"error\";\n                    }\n                break;\n                case 13:\n                    // \n                    let val13 = parseInt(msg.req.body.value).toString(2).padStart(8,\"0\");\n                    let array13 = Array.from(val13).reverse();\n                    \n                    for(let i in array13){\n                        let values = parseInt(array13[i]);\n                        let index = parseInt(i);\n                        if(index == 7 && values !== value.v){\n                            // Sleep mode\n                            output.status = \"ok\";\n                        }else if(index == 6 && values !== value.v){\n                            // Ionize mode\n                            output.status = \"ok\";\n                        }else if(index == 5 & values !== value.v){\n                            // timerType mode\n                            output.status = \"ok\";\n                        }else{\n                            // Time On Hour\n                            if(value.v !== msg.req.body.value){\n                                output.status = \"ok\";\n                            }else{\n                                output.status = \"Already Value\";\n                            }\n                        }\n                    }\n                break;\n                case 14:\n                    let val14 = parseInt(msg.req.body.value).toString().padStart(8,\"0\");\n                    let array14 = Array.from(val14).reverse();\n                    \n                    for(let i in array13){\n                        let values = parseInt(array14[i]);\n                        let index = parseInt(i);\n                        \n                        if(index == 7 && values !== value.v){\n                            output.status = \"ok\";\n                        }else if(index == 6 && values !== value.v){\n                            output.status = \"ok\";\n                        }else{\n                            if(value.v !== msg.req.body.value){\n                                output.status = \"ok\";\n                            }else{\n                                output.status = \"Already Value\";\n                            }\n                        }\n                    }\n                break;\n                case 15:\n                    let val15 = parseInt(msg.req.body.value).toString().padStart(8,\"0\");\n                    let array15 = Array.from(val15).reverse();\n                    \n                    for(let i in array15){\n                        let values = parseInt(array15[i]);\n                        let index = parseInt(i);\n                        \n                        if(index == 7 && values !== value.v){\n                            output.status = \"ok\";\n                        }else if(index == 6 && values !== value.v){\n                            output.status = \"ok\";\n                        }else if(index == 5 && values !== value.v){\n                            output.status = \"ok\";\n                        }else{\n                            if(value.v !== msg.req.body.value){\n                                output.status = \"ok\";\n                            }else{\n                                output.status = \"Already Value\";\n                            }\n                        }\n                    }\n                break;\n                case 16:\n                    let val16 = parseInt(msg.req.body.value).toString().padStart(8,\"0\");\n                    let array16 = Array.from(val16).reverse();\n                    \n                    for(let i in array16){\n                        let values = parseInt(array16[i]);\n                        let index = parseInt(i);\n                        \n                        if(index == 7 && values !== value.v){\n                            output.status = \"ok\";\n                        }else if(index == 6 && values !== value.v){\n                            output.status = \"ok\";\n                        }else{\n                            if(value.v !== msg.req.body.value){\n                                output.status = \"ok\";\n                            }else{\n                                output.status = \"Already Value\";\n                            }\n                        }\n                    }\n                break;\n            }\n        }\n    }\n}\nnode.warn(output)\nmsg.payload = output;\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1180,
+        "y": 740,
+        "wires": [
+            [
+                "f8759570d97943f3"
+            ]
+        ]
+    },
+    {
+        "id": "0796f097fa1b7ab7",
+        "type": "delay",
+        "z": "c966afa79966a4dc",
+        "name": "",
+        "pauseType": "delay",
+        "timeout": "5",
+        "timeoutUnits": "seconds",
+        "rate": "1",
+        "nbRateUnits": "1",
+        "rateUnits": "second",
+        "randomFirst": "1",
+        "randomLast": "5",
+        "randomUnits": "seconds",
+        "drop": false,
+        "allowrate": false,
+        "outputs": 1,
+        "x": 780,
+        "y": 740,
+        "wires": [
+            [
+                "d5c2972d1e557170"
+            ]
+        ]
+    },
+    {
+        "id": "2d190ac75b1ebf65",
+        "type": "inject",
+        "z": "c966afa79966a4dc",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "<2C3AE846F717000001050101000A4C>",
+        "payloadType": "str",
+        "x": 150,
+        "y": 820,
+        "wires": [
+            [
+                "d87ac8c65c370c2e"
+            ]
+        ]
+    },
+    {
+        "id": "55c5629b0e133182",
+        "type": "debug",
+        "z": "c966afa79966a4dc",
+        "name": "",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 410,
+        "y": 20,
+        "wires": []
+    },
+    {
+        "id": "f61dae19fe3cb748",
+        "type": "mqtt-broker",
+        "name": "",
+        "broker": "localhost",
+        "port": "1883",
+        "clientid": "test0",
+        "autoConnect": true,
+        "usetls": false,
+        "protocolVersion": "4",
+        "keepalive": "60",
+        "cleansession": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthPayload": "",
+        "birthMsg": {},
+        "closeTopic": "",
+        "closeQos": "0",
+        "closePayload": "",
+        "closeMsg": {},
+        "willTopic": "",
+        "willQos": "0",
+        "willPayload": "",
+        "willMsg": {},
+        "sessionExpiry": ""
+    }
+]
